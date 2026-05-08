@@ -6,7 +6,8 @@ esm2:
   hidden_dim: 1280
   max_tokens: 1022           # ESM-2 positional limit minus BOS/EOS
   dtype: float16
-  shard_size_proteins: 1000  # proteins per output shard
+  shard_size_tasks: 2000     # tasks per output shard (one task = one short protein OR one tile of a long protein)
+  batch_size: 16             # tasks per ESM-2 forward pass
 
 extraction:
   out_dir: data/embeddings/esm2_650M
