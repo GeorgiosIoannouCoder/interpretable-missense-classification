@@ -1,0 +1,35 @@
+# ESM-2 (650M) residue-embedding extraction and MLP classifier head config.
+seed: 42
+
+esm2:
+  model_id: facebook/esm2_t33_650M_UR50D
+  hidden_dim: 1280
+  max_tokens: 1022           # ESM-2 positional limit minus BOS/EOS
+  dtype: float16
+  shard_size_proteins: 1000  # proteins per output shard
+
+extraction:
+  out_dir: data/embeddings/esm2_650M
+  manifest: data/embeddings/esm2_650M/manifest.json
+
+head:
+  hidden_dim: 256
+  dropout: 0.2
+  norm: layer  # one of {layer, batch}
+
+training:
+  optimizer: adamw
+  lr: 1.0e-3
+  weight_decay: 0.01
+  scheduler: cosine
+  warmup_ratio: 0.05
+  epochs: 25
+  batch_size: 512
+  early_stop_metric: auprc
+  early_stop_patience: 5
+  sampler: class_weight       # {class_weight, balanced}
+  loss: bce_with_logits
+  mixed_precision: bf16
+  ckpt_dir: checkpoints/esm2_head
+  ckpt_steps: 500
+  resume: auto

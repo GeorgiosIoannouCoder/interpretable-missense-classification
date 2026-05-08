@@ -1,0 +1,29 @@
+# Baseline model configuration (logistic regression and random forest on
+# the five proposal-listed handcrafted features).
+seed: 42
+
+features:
+  ref_aa_one_hot: true
+  alt_aa_one_hot: true
+  blosum62: true
+  window_radius: 7
+  normalized_position: true
+  # Appendix-only ablation (NOT part of the headline baseline).
+  bio_deltas: false
+
+logistic_regression:
+  penalty: l2
+  class_weight: balanced
+  C_grid: [0.01, 0.1, 1.0, 10.0, 100.0]
+  max_iter: 5000
+
+random_forest:
+  n_estimators: 500
+  class_weight: balanced
+  max_depth_grid: [null, 10, 20]
+  min_samples_leaf_grid: [1, 5, 10]
+  n_jobs: -1
+
+paths:
+  features_npz: data/processed/features_handcrafted.npz
+  models_dir: checkpoints/baseline

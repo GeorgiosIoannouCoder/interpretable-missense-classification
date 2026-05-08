@@ -1,0 +1,32 @@
+# Data download / preprocessing configuration.
+seed: 42
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  embeddings_dir: data/embeddings
+  external_dir: data/external
+
+clinvar:
+  url: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz
+  filename: variant_summary.txt.gz
+
+uniprot:
+  proteome_url: https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Eukaryota/UP000005640/UP000005640_9606.fasta.gz
+  idmapping_url: https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz
+
+alphamissense:
+  # Hosted by Google DeepMind; 1.6 GB.
+  url: https://storage.googleapis.com/dm_alphamissense/AlphaMissense_hg38.tsv.gz
+  filename: AlphaMissense_hg38.tsv.gz
+
+cadd:
+  # ~80 GB whole-genome SNV PHRED scores; downloaded once and queried locally via tabix.
+  scores_url: https://krishna.gs.washington.edu/download/CADD/v1.7/GRCh38/whole_genome_SNVs.tsv.gz
+  index_url: https://krishna.gs.washington.edu/download/CADD/v1.7/GRCh38/whole_genome_SNVs.tsv.gz.tbi
+
+splits:
+  train_frac: 0.70
+  val_frac: 0.10
+  test_frac: 0.20
+  strategy: gene_disjoint
