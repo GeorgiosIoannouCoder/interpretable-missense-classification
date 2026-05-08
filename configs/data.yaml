@@ -21,9 +21,9 @@ alphamissense:
   filename: AlphaMissense_hg38.tsv.gz
 
 cadd:
-  # ~80 GB whole-genome SNV PHRED scores; downloaded once and queried locally via tabix.
-  scores_url: https://krishna.gs.washington.edu/download/CADD/v1.7/GRCh38/whole_genome_SNVs.tsv.gz
-  index_url: https://krishna.gs.washington.edu/download/CADD/v1.7/GRCh38/whole_genome_SNVs.tsv.gz.tbi
+  # ~87 GB whole-genome SNV PHRED scores (v1.7 GRCh38); downloaded once and queried locally via tabix.
+  scores_url: https://kircherlab.bihealth.org/download/CADD/v1.7/GRCh38/whole_genome_SNVs.tsv.gz
+  index_url: https://kircherlab.bihealth.org/download/CADD/v1.7/GRCh38/whole_genome_SNVs.tsv.gz.tbi
 
 splits:
   train_frac: 0.70
