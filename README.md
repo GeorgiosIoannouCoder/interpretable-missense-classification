@@ -142,8 +142,8 @@ See [`REPRODUCE.md`](REPRODUCE.md) for the long-form reproduction guide.
 
 ## Submission artifacts
 
-- Final report PDF: `reports/paper/final_report_team19_gi2100_vsj7589.pdf`
-- Supplementary ZIP: `supplementary_team19_gi2100_vsj7589.zip`
+- Final report PDF: [`reports/paper/final_report_team19_gi2100_vsj7589.pdf`](https://github.com/GeorgiosIoannouCoder/interpretable-missense-classification/blob/main/reports/paper/final_report_team19_gi2100_vsj7589.pdf)
+- Supplementary ZIP: [`supplementary_team19_gi2100_vsj7589.zip`](https://github.com/GeorgiosIoannouCoder/interpretable-missense-classification/blob/main/supplementary_team19_gi2100_vsj7589.zip)
 
 <p align="right"><a href="#readme-top">Back to top</a></p>
 
@@ -155,7 +155,8 @@ MIT (see [`LICENSE`](LICENSE)).
 
 ## Contact
 
-Georgios Ioannou (gi2100), Vedant Jagtap (vsj7589)
+Georgios Ioannou - [@LinkedIn](https://linkedin.com/in/georgiosioannoucoder)
+Vedant Jagtap (vsj7589)
 
 Project link: [https://github.com/GeorgiosIoannouCoder/interpretable-missense-classification](https://github.com/GeorgiosIoannouCoder/interpretable-missense-classification)
 
