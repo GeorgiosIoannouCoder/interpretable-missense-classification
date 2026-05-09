@@ -156,7 +156,8 @@ MIT (see [`LICENSE`](LICENSE)).
 ## Contact
 
 Georgios Ioannou - [@LinkedIn](https://linkedin.com/in/georgiosioannoucoder)
-Vedant Jagtap (vsj7589)
+
+Vedant Jagtap (vsj7589@nyu.edu)
 
 Project link: [https://github.com/GeorgiosIoannouCoder/interpretable-missense-classification](https://github.com/GeorgiosIoannouCoder/interpretable-missense-classification)
 
