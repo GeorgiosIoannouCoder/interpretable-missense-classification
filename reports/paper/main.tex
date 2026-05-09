@@ -18,18 +18,18 @@
 \setlength{\parskip}{2pt}
 \setlength{\parindent}{0pt}
 
-\title{\textbf{Comparing Interpretable Sequence Features and Protein Language Models for Missense Variant Classification}}
-\author{Georgios Ioannou (gi2100) \and Vedant Jagtap (vsj7589)}
-\date{}
-
 \begin{document}
 \noindent Project Report for Artificial Intelligence in Genomics (Spring 2026)
 
-\maketitle
-\vspace{-2.2em}
+\begin{center}
+{\LARGE\textbf{Comparing Interpretable Sequence Features and Protein Language Models for Missense Variant Classification}\par}
+\vspace{0.5em}
+Georgios Ioannou (gi2100) \quad Vedant Jagtap (vsj7589)
+\end{center}
+\vspace{-0.8em}
 
 \section*{Background and motivation}
-A \emph{genetic variant} is a place in a person's DNA that differs from the human reference. We focus on \emph{missense variants}: DNA changes that swap one amino acid for another in the protein; some are disease-causing (\emph{pathogenic}) and others are tolerated (\emph{benign}). \textbf{ClinVar}~\citep{landrum2020clinvar,ncbi2026intro} is our primary label source. \textbf{ESM-2}~\citep{rives2021biological,lin2023esm2} is a protein language model whose \emph{residue embeddings} (1280-d for the 650M checkpoint) summarize evolutionary context, building on work showing masked language modeling captures mutational effect signal~\citep{meier2021language}. We ask, on a \textbf{gene-held-out} split, (i)~how much signal lives in small interpretable feature sets and (ii)~whether frozen embeddings improve cross-gene AUROC/AUPRC beyond those features: the tradeoff among interpretability, compute cost, performance, and generalization.
+A \emph{genetic variant} is a place in a person's DNA that differs from the human reference. We focus on \emph{missense variants}: DNA changes that swap one amino acid for another in the protein; some are disease-causing (\emph{pathogenic}) and others are tolerated (\emph{benign}). \textbf{ClinVar}~\citep{landrum2020clinvar,ncbi2026intro} is our primary label source. \textbf{ESM-2}~\citep{rives2021biological,lin2023esm2} is a protein language model whose \emph{residue embeddings} (1280-d for the 650M checkpoint) summarize evolutionary context, building on work showing masked language modeling captures mutational effect signal~\citep{meier2021language}. We ask, on a \textbf{gene-held-out} split (entire genes are kept out of training and used only for validation or testing), (i)~how much signal lives in small interpretable feature sets and (ii)~whether frozen embeddings improve cross-gene AUROC/AUPRC beyond those features: the tradeoff among interpretability, compute cost, performance, and generalization.
 
 \section*{Methods}
 
@@ -62,12 +62,12 @@ Combined head & 1342 & Same MLP with $d=1342$, concat(handcrafted, emb.) & Same 
 \textbf{ESM-2 caveat (proposal-flagged).} ESM-2 was pretrained on UR50, which contains many human proteins; this could inflate metrics on genes already well-represented in pretraining. We surface this caveat here and analyze it empirically in the appendix (Figure~\ref{fig:studiedness}). \textbf{Computational simplicity} is reported per model in Appendix Table~\ref{tab:efficiency}.
 
 \paragraph{Evaluation.}
-Metrics mirror Phase~9: AUROC, AUPRC, F1 at the val-tuned threshold, and 95\% bootstrap CIs (1000 resamples). AlphaMissense and CADD are scored on the Phase~10 intersections with the test variants.
+Metrics mirror Phase~9: AUROC (how well scores rank pathogenic variants above benign ones across thresholds), AUPRC (precision--recall ranking quality, useful under class imbalance), F1 at the val-tuned threshold, and 95\% bootstrap CIs (1000 resamples). AlphaMissense and CADD are scored on the Phase~10 intersections with the test variants.
 
 \section*{Results}
 
 \textbf{Both empirical questions answered by the numbers in Table~\ref{tab:results}.}
-The interpretable handcrafted random forest reaches test AUROC $= 0.850$ and AUPRC $= 0.764$ -- roughly \emph{nine-tenths of the ESM-2 head's AUROC} and \emph{85\% of its AUPRC} on a strict cross-gene test. A paired bootstrap on identical variants confirms the ESM-2 head's AUROC advantage over that forest ($\Delta = +0.089$, 95\% CI $[0.085, 0.093]$, two-sided $p < 0.001$). Concatenating handcrafted features with embeddings yields a further increment (combined head: AUROC $0.954$, +$0.015$ vs.\ embedding-only), indicating partial complementarity. AlphaMissense remains the strongest reference (AUROC $0.966$ on $n=37{,}470$ variants with scores); the ESM-2 head and CADD bracket it from below (Figure~\ref{fig:rocpr}).
+The interpretable handcrafted random forest reaches test AUROC $= 0.850$ and AUPRC $= 0.764$ -- roughly \emph{nine-tenths of the ESM-2 head's AUROC} and \emph{85\% of its AUPRC} on a strict cross-gene test. A paired bootstrap on identical variants confirms the ESM-2 head's AUROC advantage over that forest ($\Delta = +0.089$, 95\% CI $[0.085, 0.093]$, two-sided $p < 0.001$). Concatenating handcrafted features with embeddings yields a further increment (combined head: AUROC $0.954$, +$0.015$ vs.\ embedding-only), indicating partial complementarity. AlphaMissense remains the strongest reference (AUROC $0.966$ on $n=37{,}470$ variants with scores), while the combined head is the closest in-house model and CADD is a strong external reference (Figure~\ref{fig:rocpr}, Table~\ref{tab:results}).
 
 \textbf{Gene-level and error structure.}
 Per-gene AUROCs and confusion summaries (Figure~\ref{fig:mainpanels}) show the ESM-2 head's gene-level median above both baselines with a tighter spread, balanced precision/recall (0.800 / 0.841) versus LR (0.552 / 0.782) and RF (0.637 / 0.754). The combined head reaches the highest F1 among our models (0.850 at the val-tuned threshold).
@@ -95,7 +95,7 @@ CADD (ref.)          & 38{,}526 & 0.928 [0.926, 0.931] & 0.839 [0.832, 0.846] & 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.92\linewidth]{../figures/fig2_roc_pr.pdf}
-\caption{\textbf{Test-set ROC and PR curves.} All models on $n=38{,}526$ gene-held-out test variants (AlphaMissense on 37{,}470 with score coverage). The ESM-2 head sits between the handcrafted baselines and AlphaMissense.}
+\caption{\textbf{Test-set ROC and PR curves.} Plotted models are evaluated on $n=38{,}526$ gene-held-out test variants, except AlphaMissense on 37{,}470 variants with score coverage. The ESM-2 head sits between the handcrafted baselines and AlphaMissense; Table~\ref{tab:results} reports the combined head as well.}
 \label{fig:rocpr}
 \end{figure}
 
@@ -119,7 +119,7 @@ Interpretability and disk footprint favor logistic regression; the forest remain
 
 \textbf{Future work.} End-to-end ESM-2 fine-tuning on ClinVar labels or structured clinical loss functions could probe how much of the current gap to AlphaMissense is fixable with data rather than architecture.
 
-\section*{Supplementary materials} \texttt{supplementary\_team19\_gi2100\_vsj7589.zip} bundles code, configs, pinned dependencies, \texttt{REPRODUCE.md}, data README, all tables/figures (including \texttt{pairwise\_tests.csv}, \texttt{rf\_esm2\_disagreement.csv}, calibration, ablations), and the GitHub mirror \url{https://github.com/GeorgiosIoannouCoder/interpretable-missense-classification}. To reproduce the full pipeline, run \texttt{make reproduce}, checkpoints are resumable.
+\section*{Supplementary materials} \texttt{supplementary\_team19\_gi2100\_vsj7589.zip} bundles code, configs, pinned dependencies, \texttt{REPRODUCE.md}, data README, all tables/figures (including \texttt{pairwise\_tests.csv}, \texttt{rf\_esm2\_disagreement.csv}, calibration, ablations), and the GitHub mirror \url{https://github.com/GeorgiosIoannouCoder/interpretable-missense-classification}. To reproduce the full pipeline, run \texttt{make reproduce}. Checkpoints are resumable.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
@@ -197,7 +197,7 @@ After UniProt Swiss-Prot mapping with ref-AA verification   &   193{,}483 \\
 \begin{table}[h]
 \centering
 \small
-\caption{\textbf{Computational-simplicity (efficiency) per model.} Inference latency measured per variant on the GH200 (CPU for sklearn models, GPU for the ESM-2 head -- excluding the one-time 4\,minutes of embedding extraction).}
+\caption{\textbf{Computational-simplicity (efficiency) per model.} Inference latency measured per variant on the GH200 (CPU for sklearn models, GPU for neural heads -- excluding the one-time 4\,minutes of ESM-2 embedding extraction). The random forest is large because all tree nodes are stored, whereas the neural-head sizes include only the small classifiers trained on frozen embeddings.}
 \label{tab:efficiency}
 \begin{tabular}{lrrrr}
 \toprule
