@@ -37,12 +37,12 @@ We use NCBI's ClinVar \texttt{variant\_summary.txt} (release dated \textbf{2026-
 To prevent \emph{train--test contamination across variants of the same gene}, we use a \textbf{gene-disjoint} 70/10/20 train/val/test split (seed 42), stratified across genes by majority label so neither split is all-positive or all-negative. Final split sizes: \textbf{train 135{,}418 / val 19{,}539 / test 38{,}526} variants, with 10{,}425 / 1{,}489 / 2{,}979 unique genes respectively.
 
 \paragraph{Models.}
-We train five predictors: two baselines on handcrafted features, two neural heads on ESM-2 embeddings (embedding-only and concatenated with handcrafted features), plus AlphaMissense~\citep{cheng2023alphamissense} and CADD~\citep{rentzsch2019cadd} as external references (not targets to outperform). The handcrafted vector per variant is exactly the five proposal families (20-d reference AA one-hot, 20-d alternate one-hot, BLOSUM62 score, 20-d local composition with window radius 7, normalized position; 62-d total). Table~\ref{tab:modelzoo} summarizes inputs and architectures; tile handling for long proteins and optimization hyperparameters are deferred to Appendix~\ref{app:training_details}.
+We train \textbf{four} in-house predictors: two baselines on handcrafted features (logistic regression and random forest) and two neural heads on frozen ESM-2 residue embeddings---embedding-only and concatenated with handcrafted features---as summarized in Table~\ref{tab:modelzoo}. \textbf{AlphaMissense}~\citep{cheng2023alphamissense} and \textbf{CADD}~\citep{rentzsch2019cadd} are \emph{external} reference scorers (not trained in this project; not targets to outperform); we evaluate them on the same gene-held-out test variants alongside our models (Phase~10; Table~\ref{tab:results}). The handcrafted vector per variant is exactly the five proposal families (20-d reference AA one-hot, 20-d alternate one-hot, BLOSUM62 score, 20-d local composition with window radius 7, normalized position; 62-d total). Tile handling for long proteins and optimization hyperparameters are deferred to Appendix~\ref{app:training_details}.
 
 \begin{table}[t]
 \centering
 \small
-\caption{\textbf{Our models at a glance.} Neural heads keep ESM-2 650M frozen; training uses 135{,}418 gene-disjoint variants.}
+\caption{\textbf{In-house models at a glance.} Neural heads keep ESM-2 650M frozen; training uses 135{,}418 gene-disjoint variants.}
 \label{tab:modelzoo}
 \adjustbox{width=\linewidth,center}{
 \begin{tabular}{@{}p{1.95cm}p{1.2cm}p{4.05cm}p{4.15cm}@{}}
