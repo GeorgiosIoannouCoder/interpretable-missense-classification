@@ -9,9 +9,9 @@ Inputs
 
 Outputs
 -------
-- ``data/processed/clinvar_mapped.parquet`` — variants with verified
+- ``data/processed/clinvar_mapped.parquet`` - variants with verified
   UniProt accession and protein sequence metadata.
-- ``data/processed/mapping_funnel.csv`` — counts by mapping stage.
+- ``data/processed/mapping_funnel.csv`` - counts by mapping stage.
 """
 
 from __future__ import annotations

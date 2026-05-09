@@ -9,6 +9,7 @@
 \usepackage{caption}
 \usepackage{microtype}
 \usepackage{adjustbox}
+\usepackage{array}
 \usepackage{hyperref}
 \usepackage[numbers,sort&compress]{natbib}
 
@@ -37,25 +38,23 @@ We use NCBI's ClinVar \texttt{variant\_summary.txt} (release dated \textbf{2026-
 To prevent \emph{train--test contamination across variants of the same gene}, we use a \textbf{gene-disjoint} 70/10/20 train/val/test split (seed 42), stratified across genes by majority label so neither split is all-positive or all-negative. Final split sizes: \textbf{train 135{,}418 / val 19{,}539 / test 38{,}526} variants, with 10{,}425 / 1{,}489 / 2{,}979 unique genes respectively.
 
 \paragraph{Models.}
-We train \textbf{four} in-house predictors: two baselines on handcrafted features (logistic regression and random forest) and two neural heads on frozen ESM-2 residue embeddings (embedding-only and concatenated with handcrafted features), as summarized in Table~\ref{tab:modelzoo}. \textbf{AlphaMissense}~\citep{cheng2023alphamissense} and \textbf{CADD}~\citep{rentzsch2019cadd} are \emph{external} reference scorers (not trained in this project; not targets to outperform); we evaluate them on the same gene-held-out test variants alongside our models (Phase~10; Table~\ref{tab:results}). The handcrafted vector per variant is exactly the five proposal families (20-d reference AA one-hot, 20-d alternate one-hot, BLOSUM62 score, 20-d local composition with window radius 7, normalized position; 62-d total). Tile handling for long proteins and optimization hyperparameters are deferred to Appendix~\ref{app:training_details}.
+We train \textbf{four} in-house predictors: two baselines on handcrafted features (logistic regression and random forest) and two neural heads on frozen ESM-2 residue embeddings (embedding-only and concatenated with handcrafted features), as summarized in Table~\ref{tab:modelzoo}. \textbf{AlphaMissense}~\citep{cheng2023alphamissense} and \textbf{CADD}~\citep{rentzsch2019cadd} are \emph{external} reference scorers (not trained in this project; not targets to outperform); we evaluate them on the same gene-held-out test variants alongside our models (Phase~10; Table~\ref{tab:results}). The handcrafted vector per variant is exactly the five proposal families (20-d reference AA one-hot, 20-d alternate one-hot, BLOSUM62 score, 20-d local composition with window radius 7, normalized position; 62-d total). Tile handling for long proteins and optimization hyperparameters are deferred to the Appendix training-details section.
 
 \begin{table}[t]
 \centering
 \small
 \caption{\textbf{In-house models at a glance.} Neural heads keep ESM-2 650M frozen; training uses 135{,}418 gene-disjoint variants.}
 \label{tab:modelzoo}
-\adjustbox{width=\linewidth,center}{
-\begin{tabular}{@{}p{1.95cm}p{1.2cm}p{4.05cm}p{4.15cm}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.8cm}c>{\raggedright\arraybackslash}p{5.8cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
 \textbf{Model} & \textbf{Input} & \textbf{Architecture} & \textbf{Training} \\
 \midrule
 Logistic regression & 62 & L2 LR, balanced, $C$ tuned on val AUPRC & Train split only \\
 Random forest & 62 & 500 trees, balanced, depth/leaf grid on val AUPRC & Train split only \\
-ESM-2 head & 1280 & MLP $d\to256\to1$, LayerNorm, dropout 0.2, GELU & AdamW + cosine (Appendix~\ref{app:training_details}) \\
+ESM-2 head & 1280 & MLP $d\to256\to1$, LayerNorm, dropout 0.2, GELU & AdamW + cosine; details in Appendix \\
 Combined head & 1342 & Same MLP with $d=1342$, concat(handcrafted, emb.) & Same as ESM-2 head \\
 \bottomrule
 \end{tabular}
-}
 \end{table}
 
 \textbf{ESM-2 caveat (proposal-flagged).} ESM-2 was pretrained on UR50, which contains many human proteins; this could inflate metrics on genes already well-represented in pretraining. We surface this caveat here and analyze it empirically in the appendix (Figure~\ref{fig:studiedness}). \textbf{Computational simplicity} is reported per model in Appendix Table~\ref{tab:efficiency}.
@@ -94,7 +93,7 @@ CADD (ref.)          & 38{,}526 & 0.928 [0.926, 0.931] & 0.839 [0.832, 0.846] & 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.92\linewidth]{../figures/fig2_roc_pr.pdf}
-\caption{\textbf{Test-set ROC and PR curves (Figure 2).} All models on $n=38{,}526$ gene-held-out test variants (AlphaMissense on 37{,}470 with score coverage). The ESM-2 head sits between the handcrafted baselines and AlphaMissense.}
+\caption{\textbf{Test-set ROC and PR curves.} All models on $n=38{,}526$ gene-held-out test variants (AlphaMissense on 37{,}470 with score coverage). The ESM-2 head sits between the handcrafted baselines and AlphaMissense.}
 \label{fig:rocpr}
 \end{figure}
 
@@ -124,6 +123,10 @@ Interpretability and disk footprint favor logistic regression; the forest remain
 \bibliography{references}
 
 \appendix
+\setcounter{figure}{0}
+\renewcommand{\thefigure}{A\arabic{figure}}
+\setcounter{table}{0}
+\renewcommand{\thetable}{A\arabic{table}}
 \section*{Appendix}
 
 \subsection*{Neural training details}
@@ -133,7 +136,7 @@ Both the ESM-2 and combined heads are trained with AdamW (learning rate $10^{-3}
 \begin{table}[h]
 \centering
 \small
-\caption{\textbf{Table A2 / Calibration on the gene-held-out test set ($n=38{,}526$).} Brier score and expected calibration error (ECE) with ten quantile bins; lower is better. Plots appear in Figure~\ref{fig:calibration}.}
+\caption{\textbf{Calibration on the gene-held-out test set ($n=38{,}526$).} Brier score and expected calibration error (ECE) with ten quantile bins; lower is better. Plots appear in Figure~\ref{fig:calibration}.}
 \label{tab:calibration}
 \begin{tabular}{lrrr}
 \toprule
@@ -150,28 +153,28 @@ Combined head       & 0.080 & 0.048 \\
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{../figures/figA2_calibration.pdf}
-\caption{\textbf{Figure A2 / Reliability diagrams.} Calibration curves for the four in-house scorers (10 quantile bins). Points should hug the diagonal under perfect calibration.}
+\caption{\textbf{Reliability diagrams.} Calibration curves for the four in-house scorers (10 quantile bins). Points should hug the diagonal under perfect calibration.}
 \label{fig:calibration}
 \end{figure}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{../figures/figA3_feature_ablation.pdf}
-\caption{\textbf{Figure A3 / Random forest feature-family ablation.} Test AUPRC when training only on cumulative feature subsets (top block) or removing one family from the full 62-d vector (bottom block) using the Phase~7 hyperparameters. The local window composition drives most of the lift beyond substitution-aware features.}
+\caption{\textbf{Random forest feature-family ablation.} Test AUPRC when training only on cumulative feature subsets (top block) or removing one family from the full 62-d vector (bottom block) using the Phase~7 hyperparameters. The local window composition drives most of the lift beyond substitution-aware features.}
 \label{fig:ablation}
 \end{figure}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{../figures/figA4_rf_esm2_disagreement.pdf}
-\caption{\textbf{Figure A4 / Random forest vs.\ ESM-2 head disagreements.} \emph{Left:} test-set scores with validation-tuned thresholds (dashed); black outlines mark variants where hard predictions differ. \emph{Right:} among those disagreements ($n=9{,}552$), how often each model matches the ClinVar binary label (6{,}801 vs.\ 2{,}751).}
+\caption{\textbf{Random forest vs.\ ESM-2 head disagreements.} \emph{Left:} test-set scores with validation-tuned thresholds (dashed); black outlines mark variants where hard predictions differ. \emph{Right:} among those disagreements ($n=9{,}552$), how often each model matches the ClinVar binary label (6{,}801 vs.\ 2{,}751).}
 \label{fig:disagreement}
 \end{figure}
 
 \begin{table}[h]
 \centering
 \small
-\caption{\textbf{Table 1 / Filtering funnel.} Each row reports retained ClinVar variants after applying the labelled stage. The proposal's cited 2026-03-30 baseline (4.24\,M variation records) is reproduced approximately at the GRCh38 stage with our 2026-05-04 snapshot.}
+\caption{\textbf{Filtering funnel.} Each row reports retained ClinVar variants after applying the labelled stage. The proposal's cited 2026-03-30 baseline (4.24\,M variation records) is reproduced approximately at the GRCh38 stage with our 2026-05-04 snapshot.}
 \label{tab:funnel}
 \begin{tabular}{lr}
 \toprule
@@ -192,7 +195,7 @@ After UniProt Swiss-Prot mapping with ref-AA verification   &   193{,}483 \\
 \begin{table}[h]
 \centering
 \small
-\caption{\textbf{Table A1 / Computational-simplicity (efficiency) per model.} Inference latency measured per variant on the GH200 (CPU for sklearn models, GPU for the ESM-2 head -- excluding the one-time 4\,minutes of embedding extraction).}
+\caption{\textbf{Computational-simplicity (efficiency) per model.} Inference latency measured per variant on the GH200 (CPU for sklearn models, GPU for the ESM-2 head -- excluding the one-time 4\,minutes of embedding extraction).}
 \label{tab:efficiency}
 \begin{tabular}{lrrrr}
 \toprule
@@ -209,35 +212,35 @@ Combined head       & 347{,}261 & 4.0            & 11.4         & 0.21  \\
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{../figures/fig1_pipeline.pdf}
-\caption{\textbf{Figure 1 / Pipeline schematic.} Data flow from raw ClinVar to the gene-held-out evaluation.}
+\caption{\textbf{Pipeline schematic.} Data flow from raw ClinVar to the gene-held-out evaluation.}
 \label{fig:pipeline}
 \end{figure}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{../figures/fig4_feature_importance.pdf}
-\caption{\textbf{Figure 4 / Handcrafted-feature interpretability.} Top-15 LR coefficients (left) and top-15 RF Gini importances (right). The most influential features are alternate amino acids (Cys, Gly, Pro, Trp), the BLOSUM62 score, and one-hot reference amino acids -- all biologically expected.}
+\caption{\textbf{Handcrafted-feature interpretability.} Top-15 LR coefficients (left) and top-15 RF Gini importances (right). The most influential features are alternate amino acids (Cys, Gly, Pro, Trp), the BLOSUM62 score, and one-hot reference amino acids -- all biologically expected.}
 \label{fig:featimp}
 \end{figure}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.85\linewidth]{../figures/fig5_umap.pdf}
-\caption{\textbf{Figure 5 / UMAP of ESM-2 test embeddings.} A 5{,}000-variant random subsample of the test set, colored by ClinVar label. Pathogenic and benign clouds are partly separable in the embedding space even before any classifier is trained -- the head's job is largely a linear cleanup.}
+\caption{\textbf{UMAP of ESM-2 test embeddings.} A 5{,}000-variant random subsample of the test set, colored by ClinVar label. Pathogenic and benign clouds are partly separable in the embedding space even before any classifier is trained -- the head's job is largely a linear cleanup.}
 \label{fig:umap}
 \end{figure}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.85\linewidth]{../figures/fig7_studiedness.pdf}
-\caption{\textbf{Figure 7 / Per-gene AUROC vs gene studiedness.} A linear fit of per-gene AUROC versus $\log(1 + \text{ClinVar variants per gene})$ (a proxy for how heavily a gene is studied). The ESM-2 head's slope is not noticeably steeper than the baselines', suggesting its advantage is broadly distributed rather than concentrated on well-represented genes.}
+\caption{\textbf{Per-gene AUROC vs gene studiedness.} A linear fit of per-gene AUROC versus $\log(1 + \text{ClinVar variants per gene})$ (a proxy for how heavily a gene is studied). The ESM-2 head's slope is not noticeably steeper than the baselines', suggesting its advantage is broadly distributed rather than concentrated on well-represented genes.}
 \label{fig:studiedness}
 \end{figure}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{../figures/fig8_review_status.pdf}
-\caption{\textbf{Figure 8 / Review-status sensitivity.} Test AUROC and AUPRC stratified by ClinVar review-status confidence: full retained set, $\geq$2-star (criteria, multiple submitters, no conflicts), and expert ($\geq$3-star: reviewed by expert panel or practice guideline). Conclusions hold across strata; the small expert-only stratum is more variable.}
+\caption{\textbf{Review-status sensitivity.} Test AUROC and AUPRC stratified by ClinVar review-status confidence: full retained set, $\geq$2-star (criteria, multiple submitters, no conflicts), and expert ($\geq$3-star: reviewed by expert panel or practice guideline). Conclusions hold across strata; the small expert-only stratum is more variable.}
 \label{fig:reviewstatus}
 \end{figure}
 

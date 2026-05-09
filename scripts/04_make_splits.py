@@ -7,9 +7,9 @@ Inputs
 
 Outputs
 -------
-- ``data/processed/clinvar_split.parquet`` — variants tagged with ``split``.
-- ``data/processed/splits.json`` — gene -> split mapping.
-- ``reports/tables/dataset_stats.csv`` — Table 1 source (per-split stats).
+- ``data/processed/clinvar_split.parquet`` - variants tagged with ``split``.
+- ``data/processed/splits.json`` - gene -> split mapping.
+- ``reports/tables/dataset_stats.csv`` - Table 1 source (per-split stats).
 """
 
 from __future__ import annotations

@@ -7,10 +7,10 @@ Inputs
 
 Outputs
 -------
-- ``checkpoints/baseline/lr.joblib`` — best logistic-regression model.
-- ``checkpoints/baseline/rf.joblib`` — best random-forest model.
-- ``checkpoints/baseline/baseline_meta.json`` — best params + val metrics.
-- ``reports/tables/baseline_val_metrics.csv`` — val AUPRC/AUROC per model.
+- ``checkpoints/baseline/lr.joblib`` - best logistic-regression model.
+- ``checkpoints/baseline/rf.joblib`` - best random-forest model.
+- ``checkpoints/baseline/baseline_meta.json`` - best params + val metrics.
+- ``reports/tables/baseline_val_metrics.csv`` - val AUPRC/AUROC per model.
 """
 
 from __future__ import annotations

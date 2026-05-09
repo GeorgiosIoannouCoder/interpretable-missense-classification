@@ -8,17 +8,17 @@ For each model produces:
 - Per-gene AUROC distribution on the test split (Fig 6 source).
 - Operating point chosen on val and applied to test.
 - Computational-simplicity columns (training time, inference latency,
-  parameter count, model-on-disk size) — populates the proposal's fourth
+  parameter count, model-on-disk size) - populates the proposal's fourth
   tradeoff axis.
 
 Outputs
 -------
-- ``reports/tables/results.csv`` — wide per-model metrics with CIs.
-- ``reports/tables/per_gene_auroc.csv`` — long table of (model, gene, auroc).
-- ``reports/tables/efficiency.csv`` — Table A1 (computational simplicity).
-- ``reports/tables/test_predictions.parquet`` — variation_id + per-model
+- ``reports/tables/results.csv`` - wide per-model metrics with CIs.
+- ``reports/tables/per_gene_auroc.csv`` - long table of (model, gene, auroc).
+- ``reports/tables/efficiency.csv`` - Table A1 (computational simplicity).
+- ``reports/tables/test_predictions.parquet`` - variation_id + per-model
   scores (used by Phase 10 + Fig 5 UMAP).
-- ``reports/tables/pairwise_tests.csv`` — paired bootstrap AUROC/AUPRC contrasts.
+- ``reports/tables/pairwise_tests.csv`` - paired bootstrap AUROC/AUPRC contrasts.
 """
 
 from __future__ import annotations

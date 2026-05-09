@@ -5,8 +5,8 @@ A checkpoint is a single ``torch.save``-d ``.pt`` file containing
 ``global_step``, ``best_val_metric``, and the various RNG states. We
 maintain two files:
 
-- ``last.pt`` — the most recent checkpoint (atomic-rename-written).
-- ``best.pt`` — the checkpoint with the best validation metric so far.
+- ``last.pt`` - the most recent checkpoint (atomic-rename-written).
+- ``best.pt`` - the checkpoint with the best validation metric so far.
 """
 
 from __future__ import annotations

@@ -4,10 +4,10 @@ This directory holds all data the pipeline reads. Its contents are **not** commi
 
 ## Subdirectories
 
-- `raw/` — primary downloaded files (ClinVar, UniProt FASTA, UniProt id-mapping).
-- `external/` — third-party precomputed scores (AlphaMissense, CADD, CADD `.tbi`).
-- `processed/` — outputs of Phases 2-4 (filtered ClinVar, UniProt-mapped variants, splits, dataset stats, `clinvar_release.txt`).
-- `embeddings/` — Phase 6 ESM-2 residue embeddings, sharded by `data/embeddings/esm2_650M/shard_*.npz` plus a `manifest.json`.
+- `raw/` - primary downloaded files (ClinVar, UniProt FASTA, UniProt id-mapping).
+- `external/` - third-party precomputed scores (AlphaMissense, CADD, CADD `.tbi`).
+- `processed/` - outputs of Phases 2-4 (filtered ClinVar, UniProt-mapped variants, splits, dataset stats, `clinvar_release.txt`).
+- `embeddings/` - Phase 6 ESM-2 residue embeddings, sharded by `data/embeddings/esm2_650M/shard_*.npz` plus a `manifest.json`.
 
 ## Re-creating the data
 

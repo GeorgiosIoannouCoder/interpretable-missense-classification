@@ -3,8 +3,8 @@
 
 Outputs
 -------
-- ``data/processed/clinvar_missense.parquet`` — filtered + deduped variants.
-- ``data/processed/clinvar_funnel.csv`` — per-stage retention counts (Table 1 source).
+- ``data/processed/clinvar_missense.parquet`` - filtered + deduped variants.
+- ``data/processed/clinvar_funnel.csv`` - per-stage retention counts (Table 1 source).
 """
 
 from __future__ import annotations
