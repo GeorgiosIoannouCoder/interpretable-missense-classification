@@ -69,15 +69,28 @@ def main() -> None:
     tables_dir = ensure_dir(ROOT / "reports" / "tables")
 
     test_pred = pd.read_parquet(tables_dir / "test_predictions.parquet")
+    nd = int(test_pred["variation_id"].duplicated().sum())
+    if nd:
+        LOG.warning("Input test_predictions has %d duplicate variation_id rows; keeping first", nd)
+        test_pred = test_pred.drop_duplicates(subset=["variation_id"], keep="first").reset_index(drop=True)
     LOG.info("Loaded %d test variants", len(test_pred))
 
     base_keys = test_pred[["variation_id", "chrom", "pos", "ref_nt", "alt_nt", "label", "gene"]].copy()
     base_keys["pos"] = base_keys["pos"].astype(int)
     base_keys["chrom"] = base_keys["chrom"].astype(str)
-
+    if int(base_keys["variation_id"].duplicated().sum()):
+        n0 = len(base_keys)
+        base_keys = base_keys.drop_duplicates(subset=["variation_id"], keep="first")
+        LOG.warning("Deduplicated base_keys by variation_id: %d -> %d", n0, len(base_keys))
     am = load_alphamissense_for_variants(external_dir / "AlphaMissense_hg38.tsv.gz", base_keys)
     cadd = load_cadd_for_variants(external_dir / "whole_genome_SNVs.tsv.gz", base_keys)
 
+    dup_am = int(am["variation_id"].duplicated().sum())
+    dup_cd = int(cadd["variation_id"].duplicated().sum())
+    if dup_am or dup_cd:
+        LOG.warning("Dropping duplicate variation_id rows before merge (am=%d, cadd=%d)", dup_am, dup_cd)
+    am = am.drop_duplicates(subset=["variation_id"], keep="first")
+    cadd = cadd.drop_duplicates(subset=["variation_id"], keep="first")
     joined = base_keys.merge(
         am[["variation_id", "am_pathogenicity", "am_class"]],
         on="variation_id",
