@@ -26,7 +26,7 @@ src/imc/        Python package
   eval/         Metrics, bootstrap CIs, external-tool comparison
   viz/          Plots and tables
   utils/        Logging, seeding, IO
-scripts/        Numbered orchestration scripts (01_download.py ... 11_make_figures.py)
+scripts/        Numbered orchestration scripts (01_download.py ... 13_ablation_features.py)
 configs/        YAML configs for data / baseline / esm2 runs
 reports/
   figures/      Generated figures
@@ -53,10 +53,12 @@ make data         # Phase 1: download ClinVar, UniProt, idmapping, AlphaMissense
 make preprocess   # Phases 2-4: filter, map, split
 make features     # Phase 5: handcrafted features
 make embeddings   # Phase 6: ESM-2 residue embeddings (resumable)
-make train        # Phases 7-8: baselines + ESM-2 head
-make eval         # Phases 9-10: evaluation + external comparisons
-make figures      # Phase 11: generate figures and tables
+make train        # Phases 7-8 + combined head: baselines + ESM-2 head + combined head
+make eval         # Phase 9: metrics + bootstrap CIs + efficiency + test_predictions
+make external     # Phase 10: AlphaMissense + CADD on test variants
+make figures      # Phase 11: figures, tables, ablation, disagreement summary
 make report       # Phase 12: build the LaTeX report PDF
+make supplementary  # Phase 12: ZIP for submission (code + tables/figures + configs)
 
 # end-to-end:
 make reproduce
