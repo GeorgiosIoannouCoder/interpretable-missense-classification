@@ -1,6 +1,6 @@
 # Reproduction guide
 
-This file accompanies the *Comparing Interpretable Sequence Features and Protein Language Models for Missense Variant Classification* final project (Spring 2026 AI in Genomics).
+This file accompanies the *Comparing Interpretable Sequence Features and Protein Language Models for Missense Variant Classification* project.
 
 ## 1. Environment
 
@@ -73,5 +73,3 @@ WORLD_SIZE=N python3 scripts/06_extract_esm2_embeddings.py  # shards split acros
 
 - `final_report_team19_gi2100_vsj7589.pdf` (built by `make report`)
 - `supplementary_team19_gi2100_vsj7589.zip` (built by `make supplementary`)
-
-Both are uploaded to the team's group on the Brightspace assignment.
