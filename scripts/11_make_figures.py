@@ -62,6 +62,7 @@ MODEL_ORDER: list[str] = [
     "logistic_regression",
     "random_forest",
     "esm2_head",
+    "combined_head",
     "alphamissense",
     "cadd_phred",
 ]
@@ -230,6 +231,7 @@ def fig_roc_pr(test_pred: pd.DataFrame, out_path: Path) -> None:
         "logistic_regression": "score_lr",
         "random_forest": "score_rf",
         "esm2_head": "score_esm2_head",
+        "combined_head": "score_combined_head",
         "alphamissense": "am_pathogenicity",
         "cadd_phred": "cadd_phred",
     }
