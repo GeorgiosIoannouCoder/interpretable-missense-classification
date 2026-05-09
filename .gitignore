@@ -98,3 +98,14 @@ coverage.xml
 .mypy_cache/
 .ruff_cache/
 .pyre/
+
+# LaTeX intermediate build artifacts
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
