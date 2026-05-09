@@ -40,10 +40,10 @@ The CADD download is the slowest (~hours depending on network). It runs in the b
 make preprocess  # Phases 2-4: filter ClinVar, map to UniProt, gene-disjoint splits
 make features    # Phase 5: handcrafted features
 make embeddings  # Phase 6: ESM-2 (650M) residue embeddings (resumable, sharded)
-make train       # Phases 7-8: baselines + ESM-2 MLP head
+make train       # Phases 7-8 + 13: baselines, ESM-2 MLP head, combined head
 make eval        # Phase 9: metrics + bootstrap CIs + efficiency table
 make external    # Phase 10: AlphaMissense + CADD comparison on test variants
-make figures     # Phase 11: figures and tables
+make figures     # Figures + tables (incl. calibration appendix + RF feature ablation)
 make report      # Phase 12: LaTeX report PDF
 make supplementary  # Phase 12: build supplementary ZIP
 ```
@@ -57,7 +57,7 @@ make reproduce
 ## 4. Resumability (SSH-drop safe)
 
 - **ESM-2 embedding extraction:** sharded into chunks of ~1000 proteins. Each completed shard is recorded in `data/embeddings/esm2_650M/manifest.json`. Re-running `make embeddings` skips completed shards.
-- **ESM-2 MLP head training:** `last.pt` is written every epoch and every `ckpt_steps` (default 500) under `checkpoints/esm2_head/`; `--resume auto` (the default) picks up automatically.
+- **ESM-2 / combined MLP heads:** `last.pt` checkpoints live under `checkpoints/esm2_head/` and `checkpoints/combined_head/` with the same resume cadence.
 - **sklearn baselines:** persisted with `joblib`; deterministic so re-running is cheap.
 
 ## 5. Multi-GPU
