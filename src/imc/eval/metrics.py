@@ -49,23 +49,34 @@ def _confusion_components(tn: int, fp: int, fn: int, tp: int) -> tuple[float, fl
     return precision, recall, specificity, accuracy
 
 
-def best_threshold_by_f1(y_val: np.ndarray, scores_val: np.ndarray) -> float:
+def best_threshold_by_f1(y_val: np.ndarray, scores_val: np.ndarray, n_candidates: int = 201) -> float:
     """Find the operating-point threshold that maximizes F1 on the validation split.
+
+    Candidates are taken as percentiles of the actual ``scores_val`` so the
+    sweep adapts to any score range (e.g. [0,1] sigmoid outputs or [0,100]
+    CADD PHRED scores).
 
     Parameters
     ----------
     y_val : numpy.ndarray
         Validation labels (0/1).
     scores_val : numpy.ndarray
-        Validation scores in [0, 1].
+        Validation scores (any range).
+    n_candidates : int
+        Number of candidate thresholds to try along the score percentiles.
 
     Returns
     -------
     float
         Threshold ``t`` such that predicted positive iff ``score >= t``.
     """
-    candidates = np.linspace(0.0, 1.0, 201)
-    best_t = 0.5
+    s = np.asarray(scores_val, dtype=float)
+    s = s[np.isfinite(s)]
+    if s.size == 0:
+        return 0.5
+    qs = np.linspace(0.001, 0.999, n_candidates)
+    candidates = np.unique(np.quantile(s, qs))
+    best_t = float(np.median(s))
     best_f1 = -1.0
     for t in candidates:
         preds = (scores_val >= t).astype(int)
