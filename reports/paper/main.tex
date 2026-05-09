@@ -26,7 +26,7 @@
 \vspace{-2.2em}
 
 \section*{Background and motivation}
-A \emph{genetic variant} is a place in a person's DNA that differs from the human reference. We focus on \emph{missense variants}: DNA changes that swap one amino acid for another in the protein; some are disease-causing (\emph{pathogenic}) and others are tolerated (\emph{benign}). \textbf{ClinVar}~\citep{landrum2020clinvar,ncbi2026intro} is our primary label source. \textbf{ESM-2}~\citep{rives2021biological,lin2023esm2} is a protein language model whose \emph{residue embeddings} (1280-d for the 650M checkpoint) summarize evolutionary context. We ask, on a \textbf{gene-held-out} split, (i)~how much signal lives in small interpretable feature sets and (ii)~whether frozen embeddings improve cross-gene AUROC/AUPRC beyond those features---the tradeoff among interpretability, compute cost, performance, and generalization.
+A \emph{genetic variant} is a place in a person's DNA that differs from the human reference. We focus on \emph{missense variants}: DNA changes that swap one amino acid for another in the protein; some are disease-causing (\emph{pathogenic}) and others are tolerated (\emph{benign}). \textbf{ClinVar}~\citep{landrum2020clinvar,ncbi2026intro} is our primary label source. \textbf{ESM-2}~\citep{rives2021biological,lin2023esm2} is a protein language model whose \emph{residue embeddings} (1280-d for the 650M checkpoint) summarize evolutionary context, building on work showing masked language modeling captures mutational effect signal~\citep{meier2021language}. We ask, on a \textbf{gene-held-out} split, (i)~how much signal lives in small interpretable feature sets and (ii)~whether frozen embeddings improve cross-gene AUROC/AUPRC beyond those features---the tradeoff among interpretability, compute cost, performance, and generalization.
 
 \section*{Methods}
 
@@ -111,12 +111,14 @@ CADD (ref.)          & 38{,}526 & 0.928 [0.926, 0.931] & 0.839 [0.832, 0.846] & 
 \textbf{Direct numerical answers to the proposal's two questions.}
 (i)~\emph{How much pathogenicity signal do simple interpretable features capture?} The L2 logistic regression reaches AUROC $0.800$, and the random forest on the five headline families reaches AUROC $0.850$ / AUPRC $0.764$. A feature-family ablation at the Phase~7 RF hyperparameters (Appendix Figure~\ref{fig:ablation}) shows that reference + alternate one-hot encodings plus the scalar BLOSUM62 term alone achieve test AUPRC $0.622$, i.e.\ \textbf{$\sim$81\%} of the full forest's AUPRC ($0.764$), with almost all remaining lift coming from the 20-d local composition window. (ii)~\emph{Does ESM-2 improve cross-gene generalization beyond handcrafted features?} Yes: the embedding-only head gains AUROC +$0.089$ and AUPRC +$0.138$ over the RF on mutually exclusive genes, and the paired bootstrap on identical variants confirms the AUROC contrast ($\Delta = +0.089$, 95\% CI $[0.085, 0.093]$, two-sided $p < 0.001$). Concatenating embeddings with handcrafted vectors nudges performance upward again (Table~\ref{tab:results}), consistent with partially complementary information.
 
+\textbf{Where the forest and ESM-2 disagree.} At validation-tuned thresholds, the random forest and ESM-2 head assign opposite hard labels on \textbf{9{,}552} test variants (\textbf{24.8\%} of $n=38{,}526$). Whenever binary predictions conflict, exactly one can match ClinVar; the ESM-2 head is correct on \textbf{6{,}801} of those disagreements versus \textbf{2{,}751} for the forest---qualitatively aligned with the AUROC gap---with scores and counts summarized in Appendix Figure~\ref{fig:disagreement} (and \texttt{rf\_esm2\_disagreement.csv}).
+
 \textbf{Tradeoffs, calibration, and limitations.}
-Interpretability and disk footprint favor logistic regression; the forest remains expensive at inference; neural heads require a one-time embedding pass but rank best among our models. Reliability diagrams (Appendix Figure~\ref{fig:calibration}) show that all scorers are reasonably well centered, with the neural heads achieving the lowest Brier scores (Table~\ref{tab:calibration}). Limitations include canonical isoform mapping (non-canonical transcripts are dropped), UR50 pretraining overlap with human proteins, and overlap between external tools and ClinVar---AlphaMissense and CADD should be read as optimistic references. F1 uses val-tuned thresholds; the headline story is threshold-free AUROC/AUPRC.
+Interpretability and disk footprint favor logistic regression; the forest remains expensive at inference; neural heads require a one-time embedding pass but rank best among our models. Reliability diagrams (Appendix Figure~\ref{fig:calibration}) show that all scorers are reasonably well centered, with the neural heads achieving the lowest Brier scores (Table~\ref{tab:calibration}). Beyond mapping and pretraining concerns already noted, \textbf{ClinVar} reflects database and ascertainment bias (over-studied genes, uneven depth~\citep{landrum2020clinvar}), pathogenic/likely-pathogenic vs.\ benign/likely-benign aggregation mixes label confidence, and gene-disjoint splitting limits blatant same-gene leakage but cannot remove shared biology or subtle annotation echoes across genes. External scores (AlphaMissense, CADD) are partly trained on overlapping literature labels and should be read as optimistic references. F1 uses val-tuned thresholds; the headline story is threshold-free AUROC/AUPRC.
 
 \textbf{Future work.} End-to-end ESM-2 fine-tuning on ClinVar labels or structured clinical loss functions could probe how much of the current gap to AlphaMissense is fixable with data rather than architecture.
 
-\section*{Supplementary materials} \texttt{supplementary\_team19\_gi2100\_vsj7589.zip} bundles code, configs, pinned dependencies, \texttt{REPRODUCE.md}, data README, all tables/figures (including \texttt{pairwise\_tests.csv}, calibration, ablations), and the GitHub mirror \url{https://github.com/GeorgiosIoannouCoder/interpretable-missense-classification}. Run \texttt{make reproduce}; checkpoints stay resumable.
+\section*{Supplementary materials} \texttt{supplementary\_team19\_gi2100\_vsj7589.zip} bundles code, configs, pinned dependencies, \texttt{REPRODUCE.md}, data README, all tables/figures (including \texttt{pairwise\_tests.csv}, \texttt{rf\_esm2\_disagreement.csv}, calibration, ablations), and the GitHub mirror \url{https://github.com/GeorgiosIoannouCoder/interpretable-missense-classification}. Run \texttt{make reproduce}; checkpoints stay resumable.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
@@ -157,6 +159,13 @@ Combined head       & 0.080 & 0.048 \\
 \includegraphics[width=\linewidth]{../figures/figA3_feature_ablation.pdf}
 \caption{\textbf{Figure A3 / Random forest feature-family ablation.} Test AUPRC when training only on cumulative feature subsets (top block) or removing one family from the full 62-d vector (bottom block) using the Phase~7 hyperparameters. The local window composition drives most of the lift beyond substitution-aware features.}
 \label{fig:ablation}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{../figures/figA4_rf_esm2_disagreement.pdf}
+\caption{\textbf{Figure A4 / Random forest vs.\ ESM-2 head disagreements.} \emph{Left:} test-set scores with validation-tuned thresholds (dashed); black outlines mark variants where hard predictions differ. \emph{Right:} among those disagreements ($n=9{,}552$), how often each model matches the ClinVar binary label (6{,}801 vs.\ 2{,}751).}
+\label{fig:disagreement}
 \end{figure}
 
 \begin{table}[h]

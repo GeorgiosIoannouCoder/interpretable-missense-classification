@@ -5,7 +5,7 @@ Outputs land in ``reports/figures/`` and ``reports/tables/``. Per the
 instructions' "2-4 graphical items in Results" cap, the main-text figures
 are 2/3/6 (ROC+PR, confusion matrices, per-gene AUROC) plus Table 2
 (test-set metrics). Table 1 (dataset funnel) lives in Methods. Figures
-4/5/7/8 plus Table A1 are appendix material.
+4/5/7/8 plus Tables A1--A2 and Figures A2--A4 are appendix material.
 """
 
 from __future__ import annotations
@@ -101,6 +101,114 @@ def fig_appendix_calibration(test_pred: pd.DataFrame, tables_dir: Path, out_path
     plt.close(fig)
     pd.DataFrame(rows).to_csv(tables_dir / "calibration.csv", index=False)
     LOG.info("Wrote %s and %s", out_path, tables_dir / "calibration.csv")
+
+
+def fig_rf_esm2_disagreement(
+    test_pred: pd.DataFrame,
+    results: pd.DataFrame,
+    tables_dir: Path,
+    out_path: Path,
+) -> None:
+    """Appendix figure: RF vs ESM-2 head disagreements at val-tuned thresholds.
+
+    Writes ``rf_esm2_disagreement.csv`` alongside the figure. When the two
+    models disagree on the hard prediction, exactly one can match a binary
+    ClinVar label; we summarize how often each model is the correct one.
+    """
+    rf_row = results.loc[results["model"] == "random_forest"].iloc[0]
+    esm_row = results.loc[results["model"] == "esm2_head"].iloc[0]
+    t_rf = float(rf_row["operating_threshold"])
+    t_esm = float(esm_row["operating_threshold"])
+
+    sub = test_pred[["label", "score_rf", "score_esm2_head"]].dropna()
+    y = sub["label"].to_numpy(dtype=int)
+    s_rf = sub["score_rf"].to_numpy(dtype=float)
+    s_esm = sub["score_esm2_head"].to_numpy(dtype=float)
+
+    p_rf = (s_rf >= t_rf).astype(int)
+    p_esm = (s_esm >= t_esm).astype(int)
+    disagree = p_rf != p_esm
+    n = int(len(sub))
+    n_dis = int(disagree.sum())
+    esm_right = int((disagree & (p_esm == y)).sum())
+    rf_right = int((disagree & (p_rf == y)).sum())
+    if esm_right + rf_right != n_dis:
+        raise RuntimeError("Disagreement accounting invariant broken")
+
+    summary = pd.DataFrame(
+        [
+            {
+                "test_n": n,
+                "n_disagree": n_dis,
+                "pct_disagree": round(100.0 * n_dis / n, 2),
+                "disagree_esm2_head_correct": esm_right,
+                "disagree_rf_correct": rf_right,
+                "threshold_rf": t_rf,
+                "threshold_esm2_head": t_esm,
+            }
+        ]
+    )
+    summary.to_csv(tables_dir / "rf_esm2_disagreement.csv", index=False)
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4.2))
+    path_mask = y == 1
+    axes[0].scatter(
+        s_rf[path_mask],
+        s_esm[path_mask],
+        s=4,
+        alpha=0.11,
+        c="C3",
+        label="Pathogenic",
+        rasterized=True,
+    )
+    axes[0].scatter(
+        s_rf[~path_mask],
+        s_esm[~path_mask],
+        s=4,
+        alpha=0.11,
+        c="C0",
+        label="Benign",
+        rasterized=True,
+    )
+    axes[0].axvline(t_rf, color="gray", linestyle="--", linewidth=1.0)
+    axes[0].axhline(t_esm, color="gray", linestyle="--", linewidth=1.0)
+    axes[0].scatter(
+        s_rf[disagree],
+        s_esm[disagree],
+        s=10,
+        facecolors="none",
+        edgecolors="black",
+        linewidths=0.45,
+        label=f"Disagree (n={n_dis:,})",
+        rasterized=True,
+    )
+    axes[0].set_xlabel("Random forest score")
+    axes[0].set_ylabel("ESM-2 head score")
+    axes[0].set_title("Test-set scores (val-tuned thresholds, dashed)")
+    axes[0].legend(loc="lower right", fontsize=8)
+    axes[0].set_xlim(-0.02, 1.02)
+    axes[0].set_ylim(-0.02, 1.02)
+
+    who = pd.DataFrame(
+        {
+            "Winner on disagreements": ["ESM-2 head", "Random forest"],
+            "count": [esm_right, rf_right],
+        }
+    )
+    xpos = np.arange(len(who))
+    axes[1].bar(xpos, who["count"], color=["C1", "C2"], width=0.55)
+    axes[1].set_xticks(xpos)
+    axes[1].set_xticklabels(who["Winner on disagreements"])
+    ymax = int(who["count"].max())
+    axes[1].set_ylim(0, ymax * 1.15)
+    axes[1].set_ylabel("Variants")
+    axes[1].set_title("Which model matches ClinVar when they disagree?")
+    for i, v in enumerate(who["count"]):
+        axes[1].text(i, int(v) + ymax * 0.02, f"{int(v):,}", ha="center", fontsize=10)
+    fig.tight_layout()
+    fig.savefig(out_path)
+    plt.close(fig)
+    LOG.info("Wrote %s and %s", out_path, tables_dir / "rf_esm2_disagreement.csv")
 
 
 def _load_test_predictions(tables_dir: Path) -> pd.DataFrame:
@@ -452,6 +560,7 @@ def main() -> None:
     fig_per_gene_auroc(tables_dir / "per_gene_auroc.csv", fig_dir / "fig6_per_gene_auroc.pdf")
 
     fig_appendix_calibration(test_pred, tables_dir, fig_dir / "figA2_calibration.pdf")
+    fig_rf_esm2_disagreement(test_pred, results, tables_dir, fig_dir / "figA4_rf_esm2_disagreement.pdf")
 
     fig_feature_importance(
         fig_dir / "fig4_feature_importance.pdf",

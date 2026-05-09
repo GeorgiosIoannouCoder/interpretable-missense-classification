@@ -43,7 +43,7 @@ make embeddings  # Phase 6: ESM-2 (650M) residue embeddings (resumable, sharded)
 make train       # Phases 7-8 + 13: baselines, ESM-2 MLP head, combined head
 make eval        # Phase 9: metrics + bootstrap CIs + efficiency table
 make external    # Phase 10: AlphaMissense + CADD comparison on test variants
-make figures     # Figures + tables (incl. calibration appendix + RF feature ablation)
+make figures     # Figures + tables (incl. calibration appendix, RF ablation, RF vs ESM-2 disagreement summary)
 make report      # Phase 12: LaTeX report PDF
 make supplementary  # Phase 12: build supplementary ZIP
 ```

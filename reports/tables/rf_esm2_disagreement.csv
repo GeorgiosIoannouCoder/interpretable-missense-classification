@@ -1,0 +1,2 @@
+test_n,n_disagree,pct_disagree,disagree_esm2_head_correct,disagree_rf_correct,threshold_rf,threshold_esm2_head
+38526,9552,24.79,6801,2751,0.316,0.4992543519341944
