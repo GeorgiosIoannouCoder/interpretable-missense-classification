@@ -53,6 +53,7 @@ external:
 
 figures:
 	$(PYTHON) scripts/11_make_figures.py
+	$(PYTHON) scripts/13_ablation_features.py
 
 report:
 	$(MAKE) -C reports/paper

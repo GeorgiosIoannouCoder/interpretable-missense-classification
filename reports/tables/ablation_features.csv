@@ -1,0 +1,11 @@
+subset,n_features,families,test_auroc,test_auprc
+ref_aa,20,ref_aa,0.6822208311152258,0.527941332629794
+ref_aa + alt_aa,40,"ref_aa,alt_aa",0.7642572919579405,0.6220248590446946
+ref_aa + alt_aa + blosum62,41,"ref_aa,alt_aa,blosum62",0.7642572919579405,0.6220248590446946
+ref_aa + alt_aa + blosum62 + window,61,"ref_aa,alt_aa,blosum62,window",0.8466531308056303,0.7576396145973595
+ref_aa + alt_aa + blosum62 + window + norm_position,62,"ref_aa,alt_aa,blosum62,window,norm_position",0.849742686754449,0.7637058696606311
+full_minus_ref_aa,42,"alt_aa,blosum62,window,norm_position",0.8415150656333293,0.7478863312841756
+full_minus_alt_aa,42,"ref_aa,blosum62,window,norm_position",0.84576248990424,0.7577866960190482
+full_minus_blosum62,61,"ref_aa,alt_aa,window,norm_position",0.8442398394078928,0.7572491541705919
+full_minus_window,42,"ref_aa,alt_aa,blosum62,norm_position",0.6875766410821257,0.5371569085581105
+full_minus_norm_position,61,"ref_aa,alt_aa,blosum62,window",0.8466531308056303,0.7576396145973595
