@@ -17,6 +17,7 @@ import numpy as np
 import torch
 from accelerate import Accelerator
 from sklearn.metrics import average_precision_score, roc_auc_score
+from torch import nn
 from torch.utils.data import DataLoader, TensorDataset, WeightedRandomSampler
 
 from imc.models.head import ESM2HeadMLP
@@ -80,7 +81,7 @@ class TrainHeadConfig:
 
 
 @torch.inference_mode()
-def _evaluate(model: ESM2HeadMLP, loader: DataLoader, device: str) -> tuple[float, float]:
+def _evaluate(model: nn.Module, loader: DataLoader, device: str) -> tuple[float, float]:
     """Compute AUPRC and AUROC on a single-process evaluation loader."""
     model.eval()
     all_scores: list[np.ndarray] = []
@@ -132,6 +133,7 @@ def train_head(
     ckpt_dir: str | Path,
     *,
     resume: str | None = "auto",
+    model_cls: type[nn.Module] = ESM2HeadMLP,
 ) -> dict[str, object]:
     """Train the ESM-2 MLP head with resumable checkpoints.
 
@@ -146,6 +148,9 @@ def train_head(
     resume : str or None
         ``"auto"`` to load ``last.pt`` if present (default); ``None`` or
         ``""`` to start fresh; otherwise an explicit checkpoint path.
+    model_cls : subclass of torch.nn.Module
+        Head constructor (default :class:`~imc.models.head.ESM2HeadMLP`).
+        Must accept ``in_dim``, ``hidden``, ``dropout``, and ``norm``.
 
     Returns
     -------
@@ -175,7 +180,7 @@ def train_head(
     )
     val_loader = _make_loader(X_val, y_val, batch_size=cfg.batch_size, shuffle=False)
 
-    model = ESM2HeadMLP(in_dim=cfg.in_dim, hidden=cfg.hidden, dropout=cfg.dropout, norm=cfg.norm)
+    model = model_cls(in_dim=cfg.in_dim, hidden=cfg.hidden, dropout=cfg.dropout, norm=cfg.norm)
 
     pos = float((y_train == 1).sum())
     neg = float((y_train == 0).sum())

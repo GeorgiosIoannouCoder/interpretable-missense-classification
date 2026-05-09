@@ -34,3 +34,6 @@ training:
   ckpt_dir: checkpoints/esm2_head
   ckpt_steps: 500
   resume: auto
+
+combined_training:
+  ckpt_dir: checkpoints/combined_head

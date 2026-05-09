@@ -43,6 +43,7 @@ embeddings:
 train:
 	$(PYTHON) scripts/07_train_baseline.py
 	$(ACCELERATE) scripts/08_train_esm2_head.py
+	$(ACCELERATE) scripts/12_train_combined.py
 
 eval:
 	$(PYTHON) scripts/09_evaluate.py

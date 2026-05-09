@@ -37,6 +37,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from imc.eval.metrics import best_threshold_by_f1, evaluate_scores, per_gene_auroc  # noqa: E402
+from imc.features.handcrafted import feature_dim  # noqa: E402
+from imc.models.combined import CombinedHead  # noqa: E402
 from imc.models.head import ESM2HeadMLP  # noqa: E402
 from imc.utils.io import ensure_dir  # noqa: E402
 from imc.utils.logging import get_logger  # noqa: E402
@@ -115,6 +117,7 @@ def main() -> None:
     LR_PATH = ROOT / cfg_base["paths"]["models_dir"] / "lr.joblib"
     RF_PATH = ROOT / cfg_base["paths"]["models_dir"] / "rf.joblib"
     HEAD_BEST = ROOT / cfg_esm["training"]["ckpt_dir"] / "best.pt"
+    COMBINED_BEST = ROOT / cfg_esm["combined_training"]["ckpt_dir"] / "best.pt"
 
     LOG.info("Loading sklearn baselines ...")
     lr = joblib.load(LR_PATH)
@@ -158,6 +161,38 @@ def main() -> None:
     head_lat = _measure_inference_latency_torch(head, head_lat_X, device=device)
     LOG.info("ESM-2 head latency=%.3f ms", head_lat)
 
+    LOG.info("Loading combined head best.pt and scoring ...")
+    in_combined = int(feature_dim()) + int(cfg_esm["esm2"]["hidden_dim"])
+    comb = CombinedHead(
+        in_dim=in_combined,
+        hidden=int(cfg_esm["head"]["hidden_dim"]),
+        dropout=float(cfg_esm["head"]["dropout"]),
+        norm=str(cfg_esm["head"]["norm"]),
+    ).to(device)
+    pay_c = torch.load(COMBINED_BEST, map_location=device, weights_only=False)
+    comb.load_state_dict(pay_c["model"])
+    comb.eval()
+
+    def _score_combined(varids: np.ndarray, X_hand: np.ndarray) -> np.ndarray:
+        sub_emb = emb.set_index("variation_id").loc[varids][feat_cols].to_numpy(dtype=np.float32)
+        xc = np.concatenate([X_hand, sub_emb], axis=1).astype(np.float32, copy=False)
+        with torch.inference_mode():
+            xt = torch.from_numpy(xc).to(device)
+            scores = torch.sigmoid(comb(xt)).detach().cpu().numpy()
+        return scores
+
+    s_val_comb = _score_combined(var_id_val, X_val)
+    s_test_comb = _score_combined(var_id_test, X_test)
+    comb_lat_X = np.concatenate(
+        [
+            X_test[:64],
+            emb.set_index("variation_id").loc[var_id_test[:64]][feat_cols].to_numpy(dtype=np.float32),
+        ],
+        axis=1,
+    )
+    comb_lat = _measure_inference_latency_torch(comb, comb_lat_X, device=device)
+    LOG.info("Combined head latency=%.3f ms", comb_lat)
+
     y_val_arr = val_df["label"].to_numpy(dtype=int)
     y_test_arr = test_df["label"].to_numpy(dtype=int)
 
@@ -165,6 +200,7 @@ def main() -> None:
         score_lr=s_test_lr,
         score_rf=s_test_rf,
         score_esm2_head=s_test_head,
+        score_combined_head=s_test_comb,
     )
 
     def _eval(name: str, sv: np.ndarray, st: np.ndarray, train_seconds: float, model_size_mb: float, params: int, latency_ms: float) -> dict:
@@ -193,10 +229,13 @@ def main() -> None:
 
     base_meta = json.loads((ROOT / cfg_base["paths"]["models_dir"] / "baseline_meta.json").read_text())
     head_meta = json.loads((ROOT / cfg_esm["training"]["ckpt_dir"] / "training_meta.json").read_text())
+    comb_meta = json.loads((ROOT / cfg_esm["combined_training"]["ckpt_dir"] / "training_meta.json").read_text())
     lr_size = _file_size_mb(LR_PATH)
     rf_size = _file_size_mb(RF_PATH)
     head_size = _file_size_mb(HEAD_BEST)
+    comb_size = _file_size_mb(COMBINED_BEST)
     n_params_head = sum(p.numel() for p in head.parameters())
+    n_params_comb = sum(p.numel() for p in comb.parameters())
     n_params_lr = int(getattr(lr, "coef_", np.zeros((1, X_val.shape[1]))).size + getattr(lr, "intercept_", np.zeros(1)).size)
     n_params_rf = int(rf.n_estimators) * 1
 
@@ -204,6 +243,7 @@ def main() -> None:
     rows.append(_eval("logistic_regression", s_val_lr, s_test_lr, base_meta["lr"]["train_seconds"], lr_size, n_params_lr, val_lr_lat))
     rows.append(_eval("random_forest", s_val_rf, s_test_rf, base_meta["rf"]["train_seconds"], rf_size, n_params_rf, val_rf_lat))
     rows.append(_eval("esm2_head", s_val_head, s_test_head, head_meta["train_seconds"], head_size, n_params_head, head_lat))
+    rows.append(_eval("combined_head", s_val_comb, s_test_comb, comb_meta["train_seconds"], comb_size, n_params_comb, comb_lat))
 
     df = pd.DataFrame(rows)
     out_csv = tables_dir / "results.csv"
@@ -221,6 +261,7 @@ def main() -> None:
         ("logistic_regression", s_test_lr),
         ("random_forest", s_test_rf),
         ("esm2_head", s_test_head),
+        ("combined_head", s_test_comb),
     ]:
         per_g = per_gene_auroc(y_test_arr, scores, test_genes, min_per_class=5)
         for g, a in per_g.items():
