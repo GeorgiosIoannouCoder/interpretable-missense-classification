@@ -46,8 +46,7 @@ A single NVIDIA GH200 96 GB (CUDA 12, Ubuntu 22). The training and embedding-ext
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
+make install      # installs Torch from the CUDA 12.6 index, then requirements.txt
 
 make data         # Phase 1: download ClinVar, UniProt, idmapping, AlphaMissense, CADD
 make preprocess   # Phases 2-4: filter, map, split
@@ -65,6 +64,11 @@ make reproduce
 ```
 
 See [`REPRODUCE.md`](REPRODUCE.md) for the long-form reproduction guide.
+
+## Submission artifacts
+
+- Final report PDF: `reports/paper/final_report_team19_gi2100_vsj7589.pdf`
+- Supplementary ZIP: `supplementary_team19_gi2100_vsj7589.zip`
 
 ## License
 
