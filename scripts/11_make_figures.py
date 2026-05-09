@@ -29,6 +29,7 @@ from sklearn.metrics import (
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from imc.eval.calibration import calibration_metrics  # noqa: E402
 from imc.features.handcrafted import HandcraftedConfig, feature_names  # noqa: E402
 from imc.utils.io import ensure_dir  # noqa: E402
 from imc.utils.logging import get_logger  # noqa: E402
@@ -53,11 +54,53 @@ MODEL_LABELS: dict[str, str] = {
     "logistic_regression": "Logistic regression",
     "random_forest": "Random forest",
     "esm2_head": "ESM-2 head",
+    "combined_head": "Combined head",
     "alphamissense": "AlphaMissense",
     "cadd_phred": "CADD",
 }
-MODEL_ORDER: list[str] = list(MODEL_LABELS.keys())
+MODEL_ORDER: list[str] = [
+    "logistic_regression",
+    "random_forest",
+    "esm2_head",
+    "alphamissense",
+    "cadd_phred",
+]
 PALETTE = sns.color_palette("colorblind", n_colors=len(MODEL_ORDER))
+
+
+def fig_appendix_calibration(test_pred: pd.DataFrame, tables_dir: Path, out_path: Path) -> None:
+    """Appendix Figure A2: reliability diagrams (10 quantile bins) for main models."""
+    specs = [
+        ("logistic_regression", "score_lr"),
+        ("random_forest", "score_rf"),
+        ("esm2_head", "score_esm2_head"),
+        ("combined_head", "score_combined_head"),
+    ]
+    fig, axes = plt.subplots(2, 2, figsize=(9, 8))
+    rows: list[dict[str, object]] = []
+    for ax, (model_key, col) in zip(axes.ravel(), specs):
+        if col not in test_pred.columns:
+            ax.set_visible(False)
+            continue
+        sub = test_pred[["label", col]].dropna()
+        y = sub["label"].to_numpy(dtype=int)
+        s = np.clip(sub[col].to_numpy(dtype=float), 0.0, 1.0)
+        m = calibration_metrics(y, s, n_bins=10, strategy="quantile")
+        ax.plot([0, 1], [0, 1], linestyle="--", color="gray", linewidth=1, label="Ideal")
+        ax.plot(m.prob_pred, m.prob_true, marker="o", linewidth=1.5, color="C0", label="Binned")
+        ax.set_xlabel("Mean predicted probability")
+        ax.set_ylabel("Fraction of positives")
+        ax.set_title(MODEL_LABELS[model_key])
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.legend(loc="lower right", fontsize=9)
+        rows.append({"model": model_key, "n": len(y), "brier": m.brier, "ece": m.ece})
+    fig.suptitle("Reliability diagrams (test set)")
+    fig.tight_layout()
+    fig.savefig(out_path)
+    plt.close(fig)
+    pd.DataFrame(rows).to_csv(tables_dir / "calibration.csv", index=False)
+    LOG.info("Wrote %s and %s", out_path, tables_dir / "calibration.csv")
 
 
 def _load_test_predictions(tables_dir: Path) -> pd.DataFrame:
@@ -407,6 +450,8 @@ def main() -> None:
     fig_roc_pr(test_pred, fig_dir / "fig2_roc_pr.pdf")
     fig_confusion(test_pred, results, fig_dir / "fig3_confusion.pdf")
     fig_per_gene_auroc(tables_dir / "per_gene_auroc.csv", fig_dir / "fig6_per_gene_auroc.pdf")
+
+    fig_appendix_calibration(test_pred, tables_dir, fig_dir / "figA2_calibration.pdf")
 
     fig_feature_importance(
         fig_dir / "fig4_feature_importance.pdf",
