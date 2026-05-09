@@ -19,11 +19,47 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from imc.eval.external import load_alphamissense_for_variants, load_cadd_for_variants  # noqa: E402
-from imc.eval.metrics import best_threshold_by_f1, evaluate_scores  # noqa: E402
+from imc.eval.metrics import best_threshold_by_f1, evaluate_scores, paired_bootstrap_difference  # noqa: E402
 from imc.utils.io import ensure_dir  # noqa: E402
 from imc.utils.logging import get_logger  # noqa: E402
 
 LOG = get_logger("imc.scripts.compare_external", log_file=ROOT / "logs" / "10_compare_external.log")
+
+
+def _merge_external_pairwise_rows(tables_dir: Path, enriched: pd.DataFrame) -> None:
+    """Refresh paired-bootstrap rows for ESM-2 vs AlphaMissense / CADD on the test table."""
+    specs: list[tuple[str, str, str, str]] = [
+        ("esm2_head", "alphamissense", "score_esm2_head", "am_pathogenicity"),
+        ("esm2_head", "cadd_phred", "score_esm2_head", "cadd_phred"),
+    ]
+    additions: list[dict[str, object]] = []
+    for model_a, model_b, col_a, col_b in specs:
+        if col_a not in enriched.columns or col_b not in enriched.columns:
+            continue
+        sub = enriched[["label", col_a, col_b]].dropna()
+        yv = sub["label"].to_numpy(dtype=int)
+        sa = sub[col_a].to_numpy(dtype=float)
+        sb = sub[col_b].to_numpy(dtype=float)
+        for metric_name in ("auroc", "auprc"):
+            r = paired_bootstrap_difference(yv, sa, sb, metric=metric_name, n_boot=1000, seed=42)
+            additions.append({
+                "model_a": model_a,
+                "model_b": model_b,
+                "metric": metric_name,
+                "n": int(len(yv)),
+                **r,
+            })
+    if not additions:
+        return
+    path = tables_dir / "pairwise_tests.csv"
+    base = pd.read_csv(path) if path.exists() else pd.DataFrame()
+    keys_drop = {(a, b) for a, b, _, _ in specs}
+    if not base.empty:
+        mask = ~base.apply(lambda row: (row["model_a"], row["model_b"]) in keys_drop, axis=1)
+        base = base[mask]
+    out = pd.concat([base, pd.DataFrame(additions)], ignore_index=True)
+    out.to_csv(path, index=False)
+    LOG.info("Updated %s with external pairwise rows (%d total)", path, len(out))
 
 
 def main() -> None:
@@ -67,6 +103,7 @@ def main() -> None:
     )
     enriched.to_parquet(enriched_path, index=False)
     LOG.info("Wrote enriched %s", enriched_path)
+    _merge_external_pairwise_rows(tables_dir, enriched)
 
     rows = []
 

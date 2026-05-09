@@ -190,6 +190,77 @@ def evaluate_scores(
     )
 
 
+def paired_bootstrap_difference(
+    y: np.ndarray,
+    scores_a: np.ndarray,
+    scores_b: np.ndarray,
+    *,
+    metric: str,
+    n_boot: int = 1000,
+    seed: int = 42,
+) -> dict[str, float]:
+    """Bootstrap the difference ``metric(A) - metric(B)`` on paired rows.
+
+    Each bootstrap replicate resamples row indices and evaluates both scores
+    on the same subset, yielding a distribution of AUROC or AUPRC deltas.
+
+    Parameters
+    ----------
+    y : numpy.ndarray
+        Binary labels.
+    scores_a, scores_b : numpy.ndarray
+        Aligned scores for models A and B.
+    metric : str
+        ``"auroc"`` or ``"auprc"``.
+    n_boot : int
+        Number of bootstrap samples.
+    seed : int
+        RNG seed.
+
+    Returns
+    -------
+    dict[str, float]
+        ``delta`` (observed difference on the full sample), ``ci_lo`` /
+        ``ci_hi`` (2.5/97.5 percentiles of the bootstrap difference), and
+        ``p_value`` (two-sided heuristic :math:`2 \\min(P(\\Delta \\le 0),
+        P(\\Delta \\ge 0))` over bootstrap replicates).
+    """
+    if metric == "auroc":
+
+        def _fn(yy: np.ndarray, ss: np.ndarray) -> float:
+            return float(roc_auc_score(yy, ss))
+
+    elif metric == "auprc":
+
+        def _fn(yy: np.ndarray, ss: np.ndarray) -> float:
+            return float(average_precision_score(yy, ss))
+
+    else:
+        raise ValueError(f"metric must be 'auroc' or 'auprc', got {metric!r}")
+
+    y = np.asarray(y).astype(int, copy=False)
+    scores_a = np.asarray(scores_a).astype(float, copy=False)
+    scores_b = np.asarray(scores_b).astype(float, copy=False)
+    n = int(len(y))
+    delta_obs = float(_fn(y, scores_a) - _fn(y, scores_b))
+    rng = np.random.default_rng(seed)
+    diffs = np.empty(n_boot, dtype=np.float64)
+    for i in range(n_boot):
+        idx = rng.integers(0, n, size=n)
+        try:
+            diffs[i] = float(_fn(y[idx], scores_a[idx]) - _fn(y[idx], scores_b[idx]))
+        except (ValueError, ZeroDivisionError):
+            diffs[i] = np.nan
+    valid = np.isfinite(diffs)
+    d = diffs[valid]
+    if d.size == 0:
+        return {"delta": delta_obs, "ci_lo": float("nan"), "ci_hi": float("nan"), "p_value": float("nan")}
+    ci_lo = float(np.percentile(d, 2.5))
+    ci_hi = float(np.percentile(d, 97.5))
+    p_value = float(min(1.0, 2 * min(np.mean(d <= 0), np.mean(d >= 0))))
+    return {"delta": delta_obs, "ci_lo": ci_lo, "ci_hi": ci_hi, "p_value": p_value}
+
+
 def per_gene_auroc(
     y: np.ndarray,
     scores: np.ndarray,

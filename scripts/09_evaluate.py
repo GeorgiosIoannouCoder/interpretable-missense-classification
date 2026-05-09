@@ -18,6 +18,7 @@ Outputs
 - ``reports/tables/efficiency.csv`` — Table A1 (computational simplicity).
 - ``reports/tables/test_predictions.parquet`` — variation_id + per-model
   scores (used by Phase 10 + Fig 5 UMAP).
+- ``reports/tables/pairwise_tests.csv`` — paired bootstrap AUROC/AUPRC contrasts.
 """
 
 from __future__ import annotations
@@ -36,7 +37,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from imc.eval.metrics import best_threshold_by_f1, evaluate_scores, per_gene_auroc  # noqa: E402
+from imc.eval.metrics import best_threshold_by_f1, evaluate_scores, paired_bootstrap_difference, per_gene_auroc  # noqa: E402
 from imc.features.handcrafted import feature_dim  # noqa: E402
 from imc.models.combined import CombinedHead  # noqa: E402
 from imc.models.head import ESM2HeadMLP  # noqa: E402
@@ -44,6 +45,18 @@ from imc.utils.io import ensure_dir  # noqa: E402
 from imc.utils.logging import get_logger  # noqa: E402
 
 LOG = get_logger("imc.scripts.evaluate", log_file=ROOT / "logs" / "09_evaluate.log")
+
+
+def _load_prior_external_scores(tables_dir: Path) -> pd.DataFrame | None:
+    """Reload AlphaMissense / CADD columns from a previous Phase-10 parquet, if any."""
+    path = tables_dir / "test_predictions.parquet"
+    if not path.exists():
+        return None
+    prior = pd.read_parquet(path)
+    cols = [c for c in ("am_pathogenicity", "cadd_phred") if c in prior.columns]
+    if not cols:
+        return None
+    return prior[["variation_id"] + cols].drop_duplicates(subset=["variation_id"])
 
 
 def _file_size_mb(p: Path) -> float:
@@ -87,6 +100,7 @@ def main() -> None:
     processed_dir = ROOT / cfg_data["paths"]["processed_dir"]
     emb_dir = ROOT / cfg_esm["extraction"]["out_dir"]
     tables_dir = ensure_dir(ROOT / "reports" / "tables")
+    prior_ext = _load_prior_external_scores(tables_dir)
 
     splits = pd.read_parquet(processed_dir / "clinvar_split.parquet")[
         ["variation_id", "gene", "label", "split", "review_stars",
@@ -202,6 +216,12 @@ def main() -> None:
         score_esm2_head=s_test_head,
         score_combined_head=s_test_comb,
     )
+    if prior_ext is not None:
+        test_df = test_df.drop(
+            columns=[c for c in ("am_pathogenicity", "cadd_phred") if c in test_df.columns],
+            errors="ignore",
+        )
+        test_df = test_df.merge(prior_ext, on="variation_id", how="left")
 
     def _eval(name: str, sv: np.ndarray, st: np.ndarray, train_seconds: float, model_size_mb: float, params: int, latency_ms: float) -> dict:
         threshold = best_threshold_by_f1(y_val_arr, sv)
@@ -272,6 +292,36 @@ def main() -> None:
 
     test_df.to_parquet(tables_dir / "test_predictions.parquet", index=False)
     LOG.info("Wrote %s", tables_dir / "test_predictions.parquet")
+
+    pair_specs: list[tuple[str, str, str, str]] = [
+        ("logistic_regression", "random_forest", "score_lr", "score_rf"),
+        ("random_forest", "esm2_head", "score_rf", "score_esm2_head"),
+        ("esm2_head", "combined_head", "score_esm2_head", "score_combined_head"),
+    ]
+    if "am_pathogenicity" in test_df.columns:
+        pair_specs.append(("esm2_head", "alphamissense", "score_esm2_head", "am_pathogenicity"))
+    if "cadd_phred" in test_df.columns:
+        pair_specs.append(("esm2_head", "cadd_phred", "score_esm2_head", "cadd_phred"))
+
+    pw_rows: list[dict[str, object]] = []
+    for model_a, model_b, col_a, col_b in pair_specs:
+        if col_a not in test_df.columns or col_b not in test_df.columns:
+            continue
+        sub = test_df[["label", col_a, col_b]].dropna()
+        y_p = sub["label"].to_numpy(dtype=int)
+        sa_p = sub[col_a].to_numpy(dtype=float)
+        sb_p = sub[col_b].to_numpy(dtype=float)
+        for metric_name in ("auroc", "auprc"):
+            r = paired_bootstrap_difference(y_p, sa_p, sb_p, metric=metric_name, n_boot=1000, seed=42)
+            pw_rows.append({
+                "model_a": model_a,
+                "model_b": model_b,
+                "metric": metric_name,
+                "n": int(len(y_p)),
+                **r,
+            })
+    pd.DataFrame(pw_rows).to_csv(tables_dir / "pairwise_tests.csv", index=False)
+    LOG.info("Wrote %s (%d rows)", tables_dir / "pairwise_tests.csv", len(pw_rows))
 
     print(df.to_string(index=False))
 
