@@ -311,25 +311,50 @@ def fig_per_gene_auroc(per_gene_csv: Path, out_path: Path) -> None:
 
 def fig_pipeline_schematic(out_path: Path) -> None:
     """Figure 1: small pipeline schematic for the Methods inset."""
-    fig, ax = plt.subplots(figsize=(8.5, 2.6))
+    fig, ax = plt.subplots(figsize=(12.0, 3.0))
     ax.axis("off")
-    boxes = [
-        ("ClinVar\nvariant_summary", 0.05),
-        ("Filter germline\nmissense P/LP vs B/LB", 0.20),
-        ("Map to UniProt\n(reviewed Swiss-Prot)", 0.38),
-        ("Gene-disjoint\n70/10/20 split", 0.55),
-        ("Handcrafted features\n(LR, RF)", 0.72),
-        ("ESM-2 (650M)\nresidue embeddings\n+ MLP head", 0.88),
+    # Six stages; short wrapped lines keep text inside boxes.
+    labels = [
+        "ClinVar\nvariant\nsummary",
+        "Germline\nmissense\nP/LP vs B/LB",
+        "Map to\nUniProt\n(reviewed)",
+        "Gene-held-out\n70/10/20",
+        "Handcrafted\nLR / RF",
+        "ESM-2 (650M)\nembedding +\nMLP head",
     ]
-    for label, x in boxes:
-        ax.add_patch(plt.Rectangle((x - 0.07, 0.30), 0.14, 0.55, facecolor="#E8F0FE", edgecolor="black"))
-        ax.text(x, 0.575, label, ha="center", va="center", fontsize=9.5)
-    for i in range(len(boxes) - 1):
-        x0 = boxes[i][1] + 0.07
-        x1 = boxes[i + 1][1] - 0.07
+    n = len(labels)
+    xs = np.linspace(0.06, 0.94, n)
+    box_w = min((xs[1] - xs[0]) - 0.024, 0.145)
+    y0, bh, y_text = 0.22, 0.58, 0.51
+    for label, x in zip(labels, xs):
+        ax.add_patch(
+            plt.Rectangle(
+                (x - box_w / 2, y0),
+                box_w,
+                bh,
+                facecolor="#E8F0FE",
+                edgecolor="black",
+                linewidth=0.9,
+            )
+        )
+        ax.text(
+            x,
+            y_text,
+            label,
+            ha="center",
+            va="center",
+            fontsize=8.5,
+            linespacing=1.05,
+        )
+    y_arrows = y_text
+    for i in range(n - 1):
+        x0 = xs[i] + box_w / 2 + 0.008
+        x1 = xs[i + 1] - box_w / 2 - 0.008
         ax.annotate(
-            "", xy=(x1, 0.575), xytext=(x0, 0.575),
-            arrowprops=dict(arrowstyle="->", lw=1.2, color="black"),
+            "",
+            xy=(x1, y_arrows),
+            xytext=(x0, y_arrows),
+            arrowprops=dict(arrowstyle="->", lw=1.2, color="black", shrinkA=0, shrinkB=0),
         )
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
@@ -518,25 +543,31 @@ def fig_review_status_sensitivity(test_pred: pd.DataFrame, splits_parquet: Path,
             })
 
     df_rows = pd.DataFrame(rows)
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.4))
     sns.barplot(
         data=df_rows, x="stratum", y="AUROC", hue="model",
         order=["full", ">=2-star", "expert (>=3-star)"],
         palette=[PALETTE[0], PALETTE[1], PALETTE[2]],
         ax=axes[0],
     )
-    axes[0].set_ylim(0.6, 1.0); axes[0].set_title("Test AUROC by review-status stratum")
+    axes[0].set_ylim(0.6, 1.0)
+    axes[0].set_title("Test AUROC by review-status stratum")
     sns.barplot(
         data=df_rows, x="stratum", y="AUPRC", hue="model",
         order=["full", ">=2-star", "expert (>=3-star)"],
         palette=[PALETTE[0], PALETTE[1], PALETTE[2]],
         ax=axes[1],
     )
-    axes[1].set_ylim(0.4, 1.0); axes[1].set_title("Test AUPRC by review-status stratum")
+    axes[1].set_ylim(0.4, 1.0)
+    axes[1].set_title("Test AUPRC by review-status stratum")
     n_by_stratum = df_rows.drop_duplicates("stratum").set_index("stratum")["n"]
+    order_keys = ["full", ">=2-star", "expert (>=3-star)"]
+    count_parts = [f"{k}: n={int(n_by_stratum[k]):,}" for k in order_keys if k in n_by_stratum.index]
+    counts_line = "     ".join(count_parts)
     for ax in axes:
-        ax.set_xlabel("Review-status stratum  " + " | ".join(f"{k}: n={v}" for k, v in n_by_stratum.items()))
-    fig.tight_layout()
+        ax.set_xlabel("Review-status stratum")
+    fig.tight_layout(rect=(0.0, 0.14, 1.0, 1.0))
+    fig.text(0.5, 0.02, counts_line, ha="center", va="bottom", fontsize=9)
     fig.savefig(out_path)
     plt.close(fig)
     LOG.info("Wrote %s", out_path)
