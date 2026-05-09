@@ -1,0 +1,101 @@
+\begin{thebibliography}{10}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Cheng et~al.(2023)Cheng, Novati, Pan, Bycroft, {\v{Z}}emgulyt{\.{e}},
+  Applebaum, Pritzel, Wong, Zielinski, Sargeant, Schneider, Senior, Jumper,
+  Hassabis, Kohli, and Avsec]{cheng2023alphamissense}
+Jun Cheng, Guido Novati, James Pan, Clare Bycroft, Akvil{\.{e}}
+  {\v{Z}}emgulyt{\.{e}}, Taylor Applebaum, Alexander Pritzel, Lily~H. Wong,
+  Michal Zielinski, Toby Sargeant, Richard~G. Schneider, Andrew~W. Senior, John
+  Jumper, Demis Hassabis, Pushmeet Kohli, and {\v{Z}}iga Avsec.
+\newblock Accurate proteome-wide missense variant effect prediction with
+  {AlphaMissense}.
+\newblock \emph{Science}, 381:\penalty0 eadg7492, 2023.
+\newblock \doi{10.1126/science.adg7492}.
+
+\bibitem[Landrum et~al.(2020)Landrum, Chitipiralla, Brown, Chen, Gu, Hart,
+  Hoffman, Jang, Kaur, Liu, Lyoshin, Maddipatla, Maiti, Mitchell, O'Leary,
+  Riley, Shi, Zhou, Schneider, Maglott, Holmes, and
+  Kattman]{landrum2020clinvar}
+Melissa~J. Landrum, Shanmuga Chitipiralla, Gary~R. Brown, Chao Chen, Baoshan
+  Gu, Jennifer Hart, Douglas Hoffman, Wonhee Jang, Kuljeet Kaur, Chunlei Liu,
+  Vitaly Lyoshin, Zenith Maddipatla, Rama Maiti, Joseph Mitchell, Nuala
+  O'Leary, George~R. Riley, Wenyao Shi, George Zhou, Valerie Schneider, Donna
+  Maglott, J.~Bradley Holmes, and Brandi~L. Kattman.
+\newblock {ClinVar}: improvements to accessing data.
+\newblock \emph{Nucleic Acids Research}, 48\penalty0 (D1):\penalty0 D835--D844,
+  2020.
+\newblock \doi{10.1093/nar/gkz972}.
+\newblock URL \url{https://doi.org/10.1093/nar/gkz972}.
+
+\bibitem[Lin et~al.(2023)Lin, Akin, Rao, Hie, Zhu, Lu, Smetanin, Verkuil,
+  Kabeli, Shmueli, Costa, Fazel-Zarandi, Sercu, Candido, and
+  Rives]{lin2023esm2}
+Zeming Lin, Halil Akin, Roshan Rao, Brian Hie, Zhongkai Zhu, Wenting Lu, Nikita
+  Smetanin, Robert Verkuil, Ori Kabeli, Yaniv Shmueli, Allan dos~Santos Costa,
+  Maryam Fazel-Zarandi, Tom Sercu, Salvatore Candido, and Alexander Rives.
+\newblock Evolutionary-scale prediction of atomic-level protein structure.
+\newblock \emph{Science}, 379\penalty0 (6637):\penalty0 1123--1130, 2023.
+\newblock \doi{10.1126/science.ade2574}.
+
+\bibitem[{NCBI ClinVar}(2026{\natexlab{a}})]{ncbi2026clinsig}
+{NCBI ClinVar}.
+\newblock Representation of classifications in {ClinVar}.
+\newblock \url{https://www.ncbi.nlm.nih.gov/clinvar/docs/clinsig/},
+  2026{\natexlab{a}}.
+\newblock Official classification terminology page.
+
+\bibitem[{NCBI ClinVar}(2026{\natexlab{b}})]{ncbi2026ftp}
+{NCBI ClinVar}.
+\newblock Guide to using files from the {FTP} site or accessed via
+  {e-utilities}.
+\newblock \url{https://www.ncbi.nlm.nih.gov/clinvar/docs/ftp_primer/},
+  2026{\natexlab{b}}.
+\newblock Official description of variant\_summary.txt.
+
+\bibitem[{NCBI ClinVar}(2026{\natexlab{c}})]{ncbi2026intro}
+{NCBI ClinVar}.
+\newblock What is {ClinVar}?
+\newblock \url{https://www.ncbi.nlm.nih.gov/clinvar/intro/},
+  2026{\natexlab{c}}.
+\newblock Official overview page.
+
+\bibitem[{NCBI ClinVar}(2026{\natexlab{d}})]{ncbi2026reviewstatus}
+{NCBI ClinVar}.
+\newblock Review status in {ClinVar}.
+\newblock \url{https://www.ncbi.nlm.nih.gov/clinvar/docs/review_status/},
+  2026{\natexlab{d}}.
+\newblock Official review-status documentation.
+
+\bibitem[Rentzsch et~al.(2019)Rentzsch, Witten, Cooper, Shendure, and
+  Kircher]{rentzsch2019cadd}
+Philipp Rentzsch, Daniela Witten, Gregory~M. Cooper, Jay Shendure, and Martin
+  Kircher.
+\newblock {CADD}: predicting the deleteriousness of variants throughout the
+  human genome.
+\newblock \emph{Nucleic Acids Research}, 47\penalty0 (D1):\penalty0 D886--D894,
+  2019.
+\newblock \doi{10.1093/nar/gky1016}.
+
+\bibitem[Rives et~al.(2021)Rives, Meier, Sercu, Goyal, Lin, Liu, Guo, Ott,
+  Zitnick, Ma, and Fergus]{rives2021biological}
+Alexander Rives, Joshua Meier, Tom Sercu, Siddharth Goyal, Zeming Lin, Jason
+  Liu, Demi Guo, Myle Ott, C.~Lawrence Zitnick, Jerry Ma, and Rob Fergus.
+\newblock Biological structure and function emerge from scaling unsupervised
+  learning to 250 million protein sequences.
+\newblock \emph{Proceedings of the National Academy of Sciences}, 118\penalty0
+  (15):\penalty0 e2016239118, 2021.
+\newblock \doi{10.1073/pnas.2016239118}.
+\newblock URL \url{https://www.pnas.org/doi/10.1073/pnas.2016239118}.
+
+\bibitem[{UniProt}(2026)]{uniprot2026proteome}
+{UniProt}.
+\newblock Homo sapiens reference proteome ({UP000005640}).
+\newblock \url{https://www.uniprot.org/proteomes/UP000005640}, 2026.
+\newblock Official proteome page.
+
+\end{thebibliography}
