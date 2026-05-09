@@ -19,10 +19,12 @@
 \setlength{\parindent}{0pt}
 
 \title{\textbf{Comparing Interpretable Sequence Features and Protein Language Models for Missense Variant Classification}}
-\author{Georgios Ioannou (gi2100) \and Vedant Jagtap (vsj7589)\\\small \texttt{AI in Genomics, Spring 2026}}
+\author{Georgios Ioannou (gi2100) \and Vedant Jagtap (vsj7589)}
 \date{}
 
 \begin{document}
+\noindent Project Report for Artificial Intelligence in Genomics (Spring 2026)
+
 \maketitle
 \vspace{-2.2em}
 
@@ -117,7 +119,7 @@ Interpretability and disk footprint favor logistic regression; the forest remain
 
 \textbf{Future work.} End-to-end ESM-2 fine-tuning on ClinVar labels or structured clinical loss functions could probe how much of the current gap to AlphaMissense is fixable with data rather than architecture.
 
-\section*{Supplementary materials} \texttt{supplementary\_team19\_gi2100\_vsj7589.zip} bundles code, configs, pinned dependencies, \texttt{REPRODUCE.md}, data README, all tables/figures (including \texttt{pairwise\_tests.csv}, \texttt{rf\_esm2\_disagreement.csv}, calibration, ablations), and the GitHub mirror \url{https://github.com/GeorgiosIoannouCoder/interpretable-missense-classification}. Run \texttt{make reproduce}; checkpoints stay resumable.
+\section*{Supplementary materials} \texttt{supplementary\_team19\_gi2100\_vsj7589.zip} bundles code, configs, pinned dependencies, \texttt{REPRODUCE.md}, data README, all tables/figures (including \texttt{pairwise\_tests.csv}, \texttt{rf\_esm2\_disagreement.csv}, calibration, ablations), and the GitHub mirror \url{https://github.com/GeorgiosIoannouCoder/interpretable-missense-classification}. To reproduce the full pipeline, run \texttt{make reproduce}, checkpoints are resumable.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
